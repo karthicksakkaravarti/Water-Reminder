@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:water_reminder/water_bottle_painter.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -211,21 +212,34 @@ class _WaterTrackerScreenState extends State<WaterTrackerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    double percentage = currentIntake / dailyGoal;
+
     return SafeArea(
       child: CustomScrollView(
         slivers: [
           SliverAppBar(
+            expandedHeight: 300.0,
             floating: false,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFF185ADB), Color(0xFF0A1931)],
+              background: Stack(
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0xFF185ADB), Color(0xFF0A1931)],
+                      ),
+                    ),
                   ),
-                ),
+                  Center(
+                    child: CustomPaint(
+                      size: Size(200, 250),
+                      painter: WaterBottlePainter(percentage: percentage),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -235,7 +249,6 @@ class _WaterTrackerScreenState extends State<WaterTrackerScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildWaterProgress(),
                   const SizedBox(height: 30),
                   _buildAddWaterSection(),
                   const SizedBox(height: 30),
