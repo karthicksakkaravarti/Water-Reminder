@@ -164,7 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Smart Reminder')),
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
@@ -216,11 +215,9 @@ class _WaterTrackerScreenState extends State<WaterTrackerScreen> {
       child: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 200.0,
             floating: false,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              title: const Text('Water Tracker'),
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
