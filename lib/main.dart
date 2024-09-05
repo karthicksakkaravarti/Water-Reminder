@@ -142,23 +142,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _undoReminder() {
     if (_reminders.isNotEmpty) {
-      String lastReminder = _reminders.removeLast();
-      setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Removed: $lastReminder'),
-          action: SnackBarAction(
-            label: 'Undo',
-            onPressed: () {
-              setState(() {
-                _reminders.add(lastReminder);
-              });
-              _saveReminders();
-            },
+      setState(() {
+        String lastReminder = _reminders.removeLast();
+        _saveReminders();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Removed: $lastReminder'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                setState(() {
+                  _reminders.add(lastReminder);
+                  _saveReminders();
+                });
+              },
+            ),
           ),
-        ),
-      );
-      _saveReminders();
+        );
+      });
     }
   }
 
@@ -168,10 +169,6 @@ class _HomeScreenState extends State<HomeScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _undoReminder,
-        child: Icon(Icons.undo),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -210,69 +207,141 @@ class _WaterTrackerScreenState extends State<WaterTrackerScreen> {
     });
   }
 
+  void undoWaterIntake() {
+    if (intakeHistory.isNotEmpty) {
+      setState(() {
+        WaterIntake lastIntake = intakeHistory.removeAt(0);
+        currentIntake -= lastIntake.amount;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Removed: ${lastIntake.amount} ml'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                setState(() {
+                  currentIntake += lastIntake.amount;
+                  intakeHistory.insert(0, lastIntake);
+                });
+              },
+            ),
+          ),
+        );
+      });
+    }
+  }
+
+  void resetWaterIntake() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Reset Water Intake'),
+          content: Text(
+              'Are you sure you want to reset your water intake for today?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Reset'),
+              onPressed: () {
+                setState(() {
+                  currentIntake = 0;
+                  intakeHistory.clear();
+                });
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Water intake reset for today')),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double percentage = currentIntake / dailyGoal;
 
-    return SafeArea(
-      child: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 300.0,
-            floating: false,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                children: [
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0xFF185ADB), Color(0xFF0A1931)],
-                      ),
-                    ),
-                  ),
-                  Center(
-                    child: CustomPaint(
-                      size: Size(200, 250),
-                      painter: WaterBottlePainter(percentage: percentage),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 30),
-                  _buildAddWaterSection(),
-                  const SizedBox(height: 30),
-                  const Text(
-                    'Today\'s Intake',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white70),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-              ),
-            ),
-          ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (BuildContext context, int index) {
-                return _buildWaterIntakeItem(intakeHistory[index]);
-              },
-              childCount: intakeHistory.length,
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: resetWaterIntake,
+            tooltip: 'Reset Water Intake',
           ),
         ],
+      ),
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 300.0,
+              floating: false,
+              pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Stack(
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF185ADB), Color(0xFF0A1931)],
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: CustomPaint(
+                        size: Size(200, 250),
+                        painter: WaterBottlePainter(percentage: percentage),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 30),
+                    _buildAddWaterSection(),
+                    const SizedBox(height: 30),
+                    const Text(
+                      'Today\'s Intake',
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white70),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              ),
+            ),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (BuildContext context, int index) {
+                  return _buildWaterIntakeItem(intakeHistory[index]);
+                },
+                childCount: intakeHistory.length,
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: undoWaterIntake,
+        child: Icon(Icons.undo),
       ),
     );
   }
